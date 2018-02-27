@@ -16,6 +16,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Psr\Log\LoggerInterface;
@@ -96,13 +97,25 @@ class RESTMenuResource extends ResourceBase {
 
     foreach ($tree as $element) {
       $link = $element->link;
+
+      $the_url = '';
+      if ($link->getUrlObject()->isExternal()) {
+        $the_url = $link->getUrlObject()->getUri();
+      } else {
+        $the_url = $link->getUrlObject()->getInternalPath();
+      }
+      
       array_push($result, array(
           'title' => $link->getTitle(),
-          'url' => $link->getUrlObject()->getInternalPath(),
+          'url' => $the_url,
           'weight' => $link->getWeight()
         )
       );
     }
-    return new ResourceResponse(json_encode($result));
+
+    $response = new JsonResponse();
+    $response->setData($result);
+
+    return $response;
   }
 }
