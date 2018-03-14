@@ -95,27 +95,46 @@ class RESTMenuResource extends ResourceBase {
     $tree = \Drupal::menuTree()->load($menu_name, $menu_parameters);
     $result = array();
 
-    foreach ($tree as $element) {
-      $link = $element->link;
-
-      $the_url = '';
-      if ($link->getUrlObject()->isExternal()) {
-        $the_url = $link->getUrlObject()->getUri();
-      } else {
-        $the_url = $link->getUrlObject()->getInternalPath();
-      }
-      
-      array_push($result, array(
-          'title' => $link->getTitle(),
-          'url' => $the_url,
-          'weight' => $link->getWeight()
-        )
-      );
+    foreach ($tree as $element) {    
+      array_push($result, $this->createEntry($element));
     }
 
     $response = new JsonResponse();
     $response->setData($result);
 
     return $response;
+  }
+
+  private function createEntry($element) {
+    $link = $element->link;
+
+    $the_url = '';
+    if ($link->getUrlObject()->isExternal()) {
+      $the_url = $link->getUrlObject()->getUri();
+    } else {
+      $the_url = $link->getUrlObject()->getInternalPath();
+    }
+
+    if ($element->hasChildren) {
+      $children = array();
+      $subtree = $element->subtree;
+
+      foreach ($subtree as $subelement) {    
+        array_push($children, $this->createEntry($subelement));
+      }
+
+      return array(
+        'title' => $link->getTitle(),
+        'url' => $the_url,
+        'weight' => $link->getWeight(),
+        'children' => $children
+      );
+    }
+    
+    return array(
+      'title' => $link->getTitle(),
+      'url' => $the_url,
+      'weight' => $link->getWeight()
+    );
   }
 }
