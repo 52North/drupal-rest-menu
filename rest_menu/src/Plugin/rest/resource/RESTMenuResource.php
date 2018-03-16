@@ -95,8 +95,10 @@ class RESTMenuResource extends ResourceBase {
     $tree = \Drupal::menuTree()->load($menu_name, $menu_parameters);
     $result = array();
 
-    foreach ($tree as $element) {    
-      array_push($result, $this->createEntry($element));
+    foreach ($tree as $element) {
+      if ($element->link->isEnabled()) {
+        array_push($result, $this->createEntry($element));
+      }
     }
 
     $response = new JsonResponse();
@@ -119,16 +121,23 @@ class RESTMenuResource extends ResourceBase {
       $children = array();
       $subtree = $element->subtree;
 
-      foreach ($subtree as $subelement) {    
-        array_push($children, $this->createEntry($subelement));
+      foreach ($subtree as $subelement) {
+        if ($subelement->link->isEnabled()) {
+          array_push($children, $this->createEntry($subelement));
+        }
       }
 
-      return array(
-        'title' => $link->getTitle(),
-        'url' => $the_url,
-        'weight' => $link->getWeight(),
-        'children' => $children
-      );
+      if (!empty($children)) {
+        return array(
+          'title' => $link->getTitle(),
+          'url' => $the_url,
+          'weight' => $link->getWeight(),
+          'children' => $children
+        );
+
+        //otherwise the below return statement is reached
+      }
+      
     }
     
     return array(
